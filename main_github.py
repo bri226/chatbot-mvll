@@ -9,22 +9,16 @@ file_path = "chatbot_prueba.xlsx"
 data = pd.read_excel(file_path)
 
 # api_key = os.getenv("OPENAI_API_KEY")
-
-# if not api_key:
-#     st.error("La clave API no está configurada correctamente.")
-# else:
-#     client = OpenAI(api_key=api_key)
-
 api_key = st.secrets["OPENAI_API_KEY"]
 
 if not api_key:
     st.error("La clave API no está configurada correctamente.")
 else:
-    openai.api_key = api_key
+    client = OpenAI(api_key=api_key)
 
 def generar_resumen(contenido):
     prompt = f"El contenido que te adjunto es un artículo de opinión de Mario Vargas Llosa en su columna Piedra de Toque. Lee el siguiente contenido, haz un resumen breve en menos de 100 palabras y muéstralo desde la perspectiva de Mario Vargas Llosa, enfocándote en su opinión: {contenido}"
-    response = openai.ChatCompletion.create(
+    response = client.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Eres un asistente que conoce la literatura y el recorrido de Mario Vargas Llosa, Premio Nobel de Literatura."},
@@ -37,7 +31,7 @@ def generar_resumen(contenido):
 
 def generar_respuesta(pregunta, contenido):
     prompt = f"Basado en el siguiente contenido de un artículo de opinión de Mario Vargas Llosa, responde a la pregunta del usuario de manera concisa y clara en menos de 100 palabras: {contenido}. Pregunta: {pregunta}"
-    response = openai.ChatCompletion.create(
+    response = client.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Eres un asistente experto en literatura y conocimiento general sobre Mario Vargas Llosa y sus artículos."},
