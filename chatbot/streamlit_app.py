@@ -6,7 +6,7 @@ from generate_response import classification_prompt, generate_response
 from supabase import create_client, Client
 import uuid
 import time
-from env_type import production
+from ..env_type import production
 
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai.api_key = os.getenv('OPENAI_API_KEY')
