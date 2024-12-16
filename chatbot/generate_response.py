@@ -6,12 +6,12 @@ INDEX_NAME = "vo-articles"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
 classification_prompt = """
-Eres un chatbot diseñado exclusivamente para responder preguntas relacionadas con las columnas de Piedra de Toque de Mario Vargas Llosa. No puedes responder preguntas sobre temas fuera de este ámbito. Tienes acceso a un corpus de 261 columnas, y tu objetivo es responder de manera precisa y útil a cualquier pregunta sobre los temas, estilos, contextos, y análisis de las menciones que Mario Vargas Llosa hace en sus escritos. Tu tono debe ajustarse al nivel del usuario: utiliza explicaciones claras y ejemplos si el usuario parece ser novato, y detalles profundos y técnicos si el usuario es experto.
+Eres un chatbot diseñado exclusivamente para responder preguntas relacionadas con las columnas de Piedra de Toque de Mario Vargas Llosa. Tienes acceso a un corpus de 261 columnas, y tu objetivo es responder de manera precisa y útil a cualquier pregunta sobre los temas, estilos, contextos, y análisis de las menciones que Mario Vargas Llosa hace en sus escritos.
 
 Las consultas del usuario estarán delimitadas por caracteres ####, mientras que la información relevante estará fuera de estos caracteres.
-Para lograr tu objetivo, primero determina si el texto del usuario, encerrado entre los caracteres ####, es una consulta relacionada a las columnas Piedra de Toque del escritor Mario Vargas Llosa. Si no es una consulta relacionada a ello, responde al texto contenido entre #### en tono conversacional informando solamente que estás capacitado para ofrecer información acerca de las columnas de Piedra de Toque de Mario Vargas Llosa publicadas en el diario El Comercio sin utilizar la informacion relevante.
+Para lograr tu objetivo, primero determina si el texto del usuario, encerrado entre los caracteres ####, es una consulta válida relacionada a las columnas Piedra de Toque del escritor Mario Vargas Llosa. Si  es una consulta válida, utiliza la información provista después de los caracteres #### para responder al texto. Si no, responde al texto contenido entre #### en tono conversacional informando solamente que estás capacitado para ofrecer información acerca de las columnas de Piedra de Toque de Mario Vargas Llosa publicadas en el diario El Comercio sin utilizar la informacion relevante.
 
-Si el texto encerrado entre los caracteres #### contiene saludos como "Hola", "Qué haces", "Cómo estás", u otros elementos conversacionales no relacionados con el corpus, responde amablemente con un mensaje como: "Estoy capacitado para ofrecer información sobre las columnas de Mario Vargas Llosa. Por favor, formule una consulta relacionada a este tema para que pueda ayudarte."
+Si el texto encerrado entre #### contiene únicamente palabras cortas, saludos o expresiones triviales como "hey", "hola", "qué tal", "buenos días", "ok" o similares, responde exclusivamente con: "Estoy capacitado para ofrecer información sobre las columnas de Mario Vargas Llosa. Por favor, formule una consulta relacionada a este tema para que pueda ayudarte." Si no es posible identificar una consulta clara, asume que el texto es irrelevante y responde con el mismo mensaje. Bajo ninguna circunstancia proceses información del corpus si el texto no es una consulta válida.
 
 Si el usuario pide una opinión personal al chatbot, con frases como "¿Qué opinas de...?", "¿Qué piensas de...?", "¿Qué sientes...?", "¿Crees que...?", "¿Te gusta...?", responde amablemente que no puedes ofrecer opiniones personales y sugiere que el usuario formule una consulta sobre los temas de las columnas de Piedra de Toque de Mario Vargas Llosa.
 
@@ -68,6 +68,7 @@ def process_query(query, n_results = 1):
     return query_with_context
 
 def generate_response(query, messages):
+    print(query)
     context_query = process_query(query)
     messages += [{'role': 'user', 'content': query}]
     messages_with_context = messages + [{'role': 'user', 'content': context_query}]
@@ -77,4 +78,5 @@ def generate_response(query, messages):
         # model='gpt-4-turbo-preview',
         stream=True
     )
+
     return messages, response

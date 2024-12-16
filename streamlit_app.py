@@ -35,6 +35,14 @@ def write_message(message):
         with st.chat_message("user", avatar=BOT_AVATAR):
             st.markdown(message["content"])
 
+def text_to_stream(text):
+    """
+    Convierte un texto en un generador que simula un stream.
+    """
+    for chunk in text:
+        yield {"choices": [{"delta": {"content": chunk}}]}
+
+
 def response_from_query():
     if st.session_state.prompt == "":
         return
@@ -49,12 +57,13 @@ def response_from_query():
     messages, response = generate_response(st.session_state.prompt, messages)
     st.session_state.history = messages
 
-    with st.chat_message("assistant", avatar=BOT_AVATAR):
-        delim = response.rfind("####")
-        if delim != -1:
-            response = response[delim + 4:].strip()
-        assistant_message = st.write_stream(response)
+    ##############################################
+    print(response)
     
+    with st.chat_message("assistant", avatar=BOT_AVATAR):
+        assistant_message = st.write_stream(response)
+    ################################################
+
     st.session_state.history.append(
         {"role": "assistant", "content": assistant_message}
     )
