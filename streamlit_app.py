@@ -50,6 +50,9 @@ def response_from_query():
     st.session_state.history = messages
 
     with st.chat_message("assistant", avatar=BOT_AVATAR):
+        delim = response.rfind("####")
+        if delim != -1:
+            response = response[delim + 4:].strip()
         assistant_message = st.write_stream(response)
     
     st.session_state.history.append(
