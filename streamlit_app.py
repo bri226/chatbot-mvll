@@ -11,7 +11,7 @@ from env_type import production
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai.api_key = os.getenv('OPENAI_API_KEY')
 DATABASE_NAME = "mvll-articles"
-BOT_INTRODUCTION = "Hola, soy el asistente de Vargas Llosa. ¿En qué puedo ayudarte hoy?"
+BOT_INTRODUCTION = "Hola, soy el asistente de las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio. ¿En qué puedo ayudarte hoy?"
 
 if production:
     supabase: Client = create_client(
