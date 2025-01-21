@@ -56,6 +56,7 @@ def response_from_query():
     # Se guarda el mensaje en el historial de mensajes
     messages = st.session_state.history
 
+    print("\nMessages: ",messages)
     # Se clasifica la pregunta del usuario
     messages, response = gr_classify_question(st.session_state.prompt, messages)
 

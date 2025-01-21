@@ -66,10 +66,10 @@ def get_relevant_documents(query):
 def gr_related_questions(query_user, messages):
     context_query = get_relevant_documents(query_user)
     formatted_prompt = f'####{query_user}####\nInformación: {context_query}'
-    messages += [{'role': 'user', 'content': query_user}]
+    # messages += [{'role': 'user', 'content': query_user}]
     messages_with_context = [{'role': 'developer', 'content': main_response_prompt}]
     messages_with_context = messages_with_context + [{'role': 'user', 'content': formatted_prompt}]
-    print(messages_with_context)
+    # print(messages_with_context)
     response = client.chat.completions.create(
         messages=messages_with_context,
         model='gpt-3.5-turbo',
