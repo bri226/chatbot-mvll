@@ -7,52 +7,33 @@ import itertools
 import json
 
 load_dotenv()
-BATCH_SIZE = 5
+BATCH_SIZE = 10
 openai_client = OpenAI(api_key = os.getenv('OPENAI_API_KEY'))
-INDEX_NAME = "vo-articles"
+INDEX_NAME = "vo-articles-v2"
+EMBEDDING_MODEL = "text-embedding-3-small"
 
 
 def batches_generator(vectors, batch_size):
-    """
-    Genera lotes (batches) de tamaño fijo a partir de una lista de vectores.
-    Esta función es útil cuando se trabaja con una gran cantidad de datos que necesitan ser procesados
-    en lotes más pequeños, como al insertar vectores en un índice de Pinecone.
-    Args:
-        vectors (list): Lista de vectores a dividir en lotes.
-        batch_size (int): Tamaño máximo de cada lote.
-    Yields:
-        tuple: Un lote de vectores como una tupla de tamaño `batch_size` o menor si no quedan suficientes elementos.
-    """
-    # Convierte la lista de vectores en un iterador para iteración eficiente.
     iterable_vectors = iter(vectors)
     
-    # Genera el primer lote de tamaño `batch_size` utilizando `islice`.
     batch = tuple(itertools.islice(iterable_vectors, batch_size))
     
-    # Mientras haya elementos en el lote actual...
     while batch:
-        yield batch  # Retorna el lote actual como una tupla.
+        yield batch
         
-        # Intenta generar el siguiente lote.
         batch = tuple(itertools.islice(iterable_vectors, batch_size))
 
 
 def main():
-    """
-    Proceso principal para cargar vectores desde un archivo, inicializar Pinecone,
-    crear un índice, y subir los vectores al índice en lotes.
-    """
-
     print("Loading Vectors")
-    # Carga los vectores desde el archivo embeddings.json
+
     with open("embeddings.json", "r", encoding=ENCODING_FORMAT) as f:
-        vectors = json.load(f)  # `vectors` contiene una lista de embeddings con metadata.
+        vectors = json.load(f)
 
     print("Initializing Pinecone client")
-    # Inicializa el cliente de Pinecone utilizando la clave de API de las variables de entorno.
     pinecone_client = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
 
-    print("Creating Index (if it's necessary)")
+    # print("Creating Index (if it's necessary)")
 
     # # Si el índice ya existe, elimínalo antes de crearlo.
     # if INDEX_NAME in pinecone_client.list_indexes().names():
@@ -68,10 +49,6 @@ def main():
     #     )
     # )
 
-
-    # if INDEX_NAME in pinecone_client.list_indexes().names():
-    #     pinecone_client.delete_index(INDEX_NAME)
-
     # pinecone_client.create_index(
     #     name=INDEX_NAME,
     #     dimension=1536,
@@ -82,18 +59,17 @@ def main():
     #     )
     # )
     
-    # Obtiene una referencia al índice recién creado.
     index = pinecone_client.Index(INDEX_NAME)
 
     print("Upserting Vectors")
-    # Inserta los vectores en el índice en lotes utilizando el generador `batches_generator`.
     i = 0
     for vectors_batches in batches_generator(vectors, BATCH_SIZE):
         i += 1
         print("Número de iteración: ",i)
         # Entró aquí 53 veces
+        # chunk_size = 600 | overlapping = 200 --> Entró aquí 175 veces
         index.upsert(
-            vectors=list(vectors_batches)  # Inserta un lote de vectores en el índice.
+            vectors=list(vectors_batches)
         )
 
 if __name__ == '__main__':
