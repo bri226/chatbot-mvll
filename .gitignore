@@ -2,5 +2,5 @@
 chatbot/__pycache__
 .streamlit/secrets.toml
 __pycache__
-# embeddings_v0.json
-embeddings.json
+embeddings_v0.json
+# embeddings.json
