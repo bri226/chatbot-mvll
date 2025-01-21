@@ -6,3 +6,4 @@ langchain
 streamlit
 supabase
 colorama
+python-dotenv
