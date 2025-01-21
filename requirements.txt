@@ -5,3 +5,4 @@ pinecone-client
 langchain
 streamlit
 supabase
+colorama
