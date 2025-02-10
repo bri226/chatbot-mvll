@@ -1,13 +1,6 @@
 from openai import OpenAI
 import streamlit as st
-from langchain.chains import create_sql_query_chain
-from langchain_openai import ChatOpenAI
-from sqlalchemy import create_engine
-from langchain_community.utilities import SQLDatabase
-import ast
-from sqlalchemy import text
-import sqlalchemy
-import json
+
 
 classify_structured_question_prompt = """
 Vas a recibir preguntas del usuario que hacen referencia a las columnas de Piedra de Toque de Mario Vargas Llosa, publicadas en el diario El Comercio. Tu tarea es identificar las preguntas del usuario que son estructuradas y las que son no estructuradas. 

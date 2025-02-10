@@ -9,7 +9,6 @@ from sqlalchemy import text
 import sqlalchemy
 import json
 from langchain_core.prompts import PromptTemplate
-import traceback
 
 # template = '''
 # Genera un query SQL que responda a la pregunta del usuario.
@@ -94,7 +93,7 @@ def generate_query(consulta_usuario):
 
     except (sqlalchemy.exc.ProgrammingError, ValueError, SyntaxError) as e:
         print("\nERROR:")
-        traceback.print_exc()
+        print(e)
         print("\nAJUSTA LA CONSULTA MANUALMENTE Y VUELVE A INTENTAR.")
         return json.dumps({"result": []}, ensure_ascii=False, indent=4)
 

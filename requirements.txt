@@ -7,3 +7,6 @@ streamlit
 supabase
 colorama
 python-dotenv
+langchain-openai
+langchain
+langchain-community
