@@ -7,6 +7,5 @@ supabase
 colorama
 python-dotenv
 langchain-openai
-langchain
 langchain-community
 git+https://github.com/bri226/langchain-modified.git@main
