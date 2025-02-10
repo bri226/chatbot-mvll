@@ -2,10 +2,12 @@ from colorama import Fore
 import openai
 import streamlit as st
 import os
+from chatbot.C_structured_questions import gr_structured_questions
 from chatbot.html_template import *
-from chatbot.question_classifier import classification_prompt, gr_classify_question
-from chatbot.unrelated_questions import gr_unrelated_questions
-from chatbot.related_questions import gr_related_questions
+from chatbot.A_question_classifier import classification_prompt, gr_classify_question
+from chatbot.B_response_secondary_categories import gr_unrelated_questions
+from chatbot.B_structured_question_classifier import gr_classify_structured_questions
+from chatbot.C_unstructured_questions import gr_unstructured_questions
 from supabase import create_client, Client
 import uuid
 import time
@@ -56,7 +58,7 @@ def response_from_query():
     # Se guarda el mensaje en el historial de mensajes
     messages = st.session_state.history
 
-    print("\nMessages: ",messages)
+    # print("\nMessages: ",messages)
     # Se clasifica la pregunta del usuario
     messages, response = gr_classify_question(st.session_state.prompt, messages)
 
@@ -68,22 +70,45 @@ def response_from_query():
     print(Fore.RED,"\nPregunta: ", st.session_state.prompt,"\nValue: ", value,Fore.BLACK,"\n")
     if value == "SÍ":
         print("Preguntas sobre las columnas Piedra de Toque")
-        messages, response_r = gr_related_questions(st.session_state.prompt, messages)
+
+        # BOT CLASIFICADOR DE PREGUNTAS ESTRUCTURADAS
+        messages, response_classify = gr_classify_structured_questions(st.session_state.prompt, messages)
+
+        structured_or_not = response_classify.choices[0].message.content
+        print(Fore.RED, "¿Estructurada o no?: ", structured_or_not, Fore.BLACK)
+        
+        if "SÍ" in structured_or_not or "Sí" in structured_or_not:
+            print("Preguntas estructuradas")
+            messages, response_official = gr_structured_questions(st.session_state.prompt, messages)
+            # value = response_official.choices[0].message.content
+            # print("Respuesta a pregunta estructurada: ",value)
+
+        elif "NO" in structured_or_not:
+            print("Preguntas no estructuradas (embeddings)")
+            # BOT RESPUESTA A PREGUNTAS NO ESTRUCTURADAS (CONTENIDO)
+            messages, response_official = gr_unstructured_questions(st.session_state.prompt, messages)
+            # value = response_official.choices[0].message.content
+            # print("Respuesta a pregunta no estructurada: ",value)
+        else:
+            print("No sabe reconocer si la pregunta es estructurada o no")
+
         st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
-            assistant_message = st.write_stream(response_r)
+            assistant_message = st.write_stream(response_official)
 
     else:
         print("Preguntas de otro tipo")
-        messages, response_ur = gr_unrelated_questions(st.session_state.prompt, messages, value)
+        messages, response_official = gr_unrelated_questions(st.session_state.prompt, messages)
         st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
-            assistant_message = st.write_stream(response_ur)
+            assistant_message = st.write_stream(response_official)
 
     st.session_state.history.append(
         {"role": "assistant", "content": assistant_message}
     )
     messages = st.session_state.history
+
+    print("MESSAGES: ",messages)
 
     # data = {"uuid": st.session_state.session_id, "role": messages[-2]["role"], "content": messages[-1]["content"]} #ELIMINAR
     # {'uuid': '218f1bb4-f837-4771-85d5-534e1d2a795b', 'role': 'user', 'content': '¡Hola! ¿En qué puedo ayudarte hoy con las columnas de Piedra de Toque?'}
@@ -100,7 +125,7 @@ def main():
         st.session_state.session_id = session_id()
         
     if "history" not in st.session_state:
-        st.session_state.history = [{'role': 'system', 'content': classification_prompt}]
+        st.session_state.history = [{"role": "system", "content": classification_prompt}]
 
     if "stream" not in st.session_state:
         st.session_state.stream = None

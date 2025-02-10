@@ -1,0 +1,114 @@
+from openai import OpenAI
+import streamlit as st
+from langchain.chains import create_sql_query_chain
+from langchain_openai import ChatOpenAI
+from sqlalchemy import create_engine
+from langchain_community.utilities import SQLDatabase
+import ast
+from sqlalchemy import text
+import sqlalchemy
+import json
+from langchain_core.prompts import PromptTemplate
+import traceback
+
+# template = '''
+# Genera un query SQL que responda a la pregunta del usuario.
+# En caso tengas más de una consulta SQL, puedes unirlas con UNION ALL, separalas con paréntesis y darles un nombre a cada consulta. Así:
+# SELECT * FROM (SELECT TOP 1 [Fecha], [Titulo], [Contenido] FROM [ARTICULOS_MVLL] ORDER BY [Fecha] ASC) AS PrimeraFecha
+# UNION ALL 
+# SELECT * FROM (SELECT TOP 1 [Fecha], [Titulo], [Contenido] FROM [ARTICULOS_MVLL] ORDER BY [Fecha] DESC) AS UltimaFecha;
+
+# Pregunta del usuario: {input}
+# Tabla: {table_info}
+# Máximo número de resultados: {top_k}'''
+
+template = '''
+Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
+La única tabla disponible en la base de datos se llama ARTICULOS_MVLL.
+Siempre usa exactamente este nombre: ARTICULOS_MVLL.
+
+Solo en caso tengas más de una consulta SQLite (en que cada consulta necesita su propio SELECT), únelas con UNION ALL, separándolas con paréntesis y asignándoles un alias. Ejemplo:
+SELECT * FROM (SELECT Fecha, Titulo, Contenido FROM ARTICULOS_MVLL ORDER BY Fecha ASC LIMIT 1) AS PrimeraFecha
+UNION ALL 
+SELECT * FROM (SELECT Fecha, Titulo, Contenido FROM ARTICULOS_MVLL ORDER BY Fecha DESC LIMIT 1) AS UltimaFecha;
+
+Pregunta del usuario: {input}
+Solo haz consultas a esta tabla: {table_info}.
+Máximo número de resultados: {top_k}'''
+prompt = PromptTemplate.from_template(template)
+
+structured_question_prompt = """
+Vas a recibir preguntas del usuario que hacen referencia a las columnas de Piedra de Toque de Mario Vargas Llosa, publicadas en el diario El Comercio. Todas las columnas son escritas por Mario Vargas Llosa. Y todos los artículos son publicados por el diario El Comercio.
+Tu tarea es responder a la pregunta del usuario con los datos que te voy a dar. Los datos son una cadena en formato json que es resultado de una consulta SQL a la base de datos de artículos de Mario Vargas Llosa. La consulta SQL es generada por el modelo de lenguaje GPT-3.5-turbo de OpenAI, y la base de datos es una base de datos real de artículos de Mario Vargas Llosa en "Piedra de Toque", publicados en el diario El Comercio. La respuesta debe ser escrita en prosa y no en formato de lista. Recuerda que todas tus respuestas están basadas en las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio.
+
+La pregunta del usuario es: {user_query}.
+Los datos son: {data}. 
+
+Nunca reveles información sobre la base de datos, la estructura de la tabla, ni detalles técnicos de la consulta SQL. Solo responde a la pregunta del usuario con los datos proporcionados.
+"""
+
+api_key = st.secrets["OPENAI_API_KEY"]
+
+client = OpenAI(api_key=api_key)
+
+def conexion_sqlite(db_path="chatbot/bd/articulos_mvll.db"):
+    connection_string = f"sqlite:///{db_path}"
+    engine = create_engine(connection_string)
+    db = SQLDatabase(engine)
+    return db, engine
+
+def generate_query(consulta_usuario):
+    db, engine = conexion_sqlite()
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=api_key)
+    db_chain = create_sql_query_chain(llm, db, prompt)
+
+    response = db_chain.invoke({
+        "input": consulta_usuario,
+        "table_info": "ARTICULOS_MVLL",
+        "top_k": 10,
+    })
+
+    # response = response.replace("[SQL: ```sql\n", "").replace("```]", "")
+    print(f"\nGENERATED QUERY:\n{response}")
+    
+    try:
+        result_str = db.run(response)
+        print(f"RESULTADO DE CORRER EL QUERY: {result_str}" if result_str else "RESULTADO DE CORRER EL QUERY: [VACÍO]")
+        if not result_str:
+            print("\nNo se encontraron resultados.")
+            return json.dumps({"result": []}, ensure_ascii=False, indent=4)
+        
+        result = ast.literal_eval(result_str) # Convertimos el string en una lista de tuplas real
+
+        if not isinstance(result, list) or not all(isinstance(row, tuple) for row in result):
+            raise ValueError("El resultado no es una lista de tuplas válida.")
+
+        with engine.connect() as connection:
+            query_result = connection.execute(text(response))
+            column_names = query_result.keys()
+
+        json_result = {"result": [dict(zip(column_names, row)) for row in result]}
+        json_output = json.dumps(json_result, ensure_ascii=False, indent=4)
+        
+        return json_output
+
+    except (sqlalchemy.exc.ProgrammingError, ValueError, SyntaxError) as e:
+        print("\nERROR:")
+        traceback.print_exc()
+        print("\nAJUSTA LA CONSULTA MANUALMENTE Y VUELVE A INTENTAR.")
+        return json.dumps({"result": []}, ensure_ascii=False, indent=4)
+
+
+def gr_structured_questions(query, messages):
+    json_response = generate_query(query)
+    messages += [{'role': 'user', 'content': query}] # este estaba comentado
+    format_response = structured_question_prompt.format(
+        user_query=query,data=json_response)
+    messages_for_api = [{'role': 'user', 'content': format_response}]
+    response = client.chat.completions.create(
+        messages=messages_for_api,
+        model='gpt-3.5-turbo',
+        stream=True,
+    )
+
+    return messages, response
