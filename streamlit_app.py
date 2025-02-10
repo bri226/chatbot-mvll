@@ -14,10 +14,6 @@ import time
 from env_type import production
 from colorama import Fore
 
-import os
-os.system("pip uninstall -y langchain")
-os.system("pip install git+https://github.com/bri226/langchain-modified.git@main#egg=langchain --force-reinstall")
-
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai.api_key = os.getenv('OPENAI_API_KEY')
 DATABASE_NAME = "mvll-articles"

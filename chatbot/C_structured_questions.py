@@ -9,17 +9,30 @@ from sqlalchemy import text
 import sqlalchemy
 import json
 from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 
-# template = '''
-# Genera un query SQL que responda a la pregunta del usuario.
-# En caso tengas más de una consulta SQL, puedes unirlas con UNION ALL, separalas con paréntesis y darles un nombre a cada consulta. Así:
-# SELECT * FROM (SELECT TOP 1 [Fecha], [Titulo], [Contenido] FROM [ARTICULOS_MVLL] ORDER BY [Fecha] ASC) AS PrimeraFecha
-# UNION ALL 
-# SELECT * FROM (SELECT TOP 1 [Fecha], [Titulo], [Contenido] FROM [ARTICULOS_MVLL] ORDER BY [Fecha] DESC) AS UltimaFecha;
+_original_create_sql_query_chain = create_sql_query_chain
 
-# Pregunta del usuario: {input}
-# Tabla: {table_info}
-# Máximo número de resultados: {top_k}'''
+def patched_create_sql_query_chain(llm, db, prompt=None, k=5):
+    chain = _original_create_sql_query_chain(llm, db, prompt, k)
+
+    def new_assign_inputs(x):
+        return {
+            "input": x["input"] + "\nSQL Query: ",
+            "table_info": lambda x: db.get_table_info(
+            table_names=x.get("table_names_to_use")
+        ),
+        }
+
+    return (
+        RunnablePassthrough.assign(**new_assign_inputs)
+        | chain.steps[1:]
+    )
+
+import langchain.chains
+langchain.chains.create_sql_query_chain = patched_create_sql_query_chain
+
+
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.

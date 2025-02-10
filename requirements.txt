@@ -6,6 +6,6 @@ streamlit
 supabase
 colorama
 python-dotenv
+langchain
 langchain-openai
 langchain-community
-git+https://github.com/bri226/langchain-modified.git@main 
