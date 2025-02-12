@@ -11,26 +11,26 @@ import json
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 
-_original_create_sql_query_chain = create_sql_query_chain
+# _original_create_sql_query_chain = create_sql_query_chain
 
-def patched_create_sql_query_chain(llm, db, prompt=None, k=5):
-    chain = _original_create_sql_query_chain(llm, db, prompt, k)
+# def patched_create_sql_query_chain(llm, db, prompt=None, k=5):
+#     chain = _original_create_sql_query_chain(llm, db, prompt, k)
 
-    def new_assign_inputs(x):
-        return {
-            "input": x["input"] + "\nSQL Query: ",
-            "table_info": lambda x: db.get_table_info(
-            table_names=x.get("table_names_to_use")
-        ),
-        }
+#     def new_assign_inputs(x):
+#         return {
+#             "input": x["input"] + "\nSQL Query: ",
+#             "table_info": lambda x: db.get_table_info(
+#             table_names=x.get("tabl_names_to_use")
+#         ),
+#         }
 
-    return (
-        RunnablePassthrough.assign(**new_assign_inputs)
-        | chain.steps[1:]
-    )
+#     return (
+#         RunnablePassthrough.assign(**new_assign_inputs)
+#         | chain.steps[1:]
+#     )
 
-import langchain.chains
-langchain.chains.create_sql_query_chain = patched_create_sql_query_chain
+# import langchain.chains
+# langchain.chains.create_sql_query_chain = patched_create_sql_query_chain
 
 
 
