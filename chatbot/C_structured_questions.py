@@ -1,3 +1,82 @@
+#########################################################################
+########################## MONKEY PATCHING (LANGCHAIN) ##################
+#########################################################################
+
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import BasePromptTemplate
+from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain.chains.sql_database.prompt import PROMPT, SQL_PROMPTS
+
+if TYPE_CHECKING:
+    from langchain_community.utilities.sql_database import SQLDatabase
+
+def _strip(text: str) -> str:
+    return text.strip()
+
+class SQLInput(TypedDict):
+    question: str
+
+class SQLInputWithTables(TypedDict):
+    question: str
+    table_names_to_use: List[str]
+
+# Definimos una nueva versión de create_sql_query_chain
+def patched_create_sql_query_chain(
+    llm: BaseLanguageModel,
+    db: SQLDatabase,
+    prompt: Optional[BasePromptTemplate] = None,
+    k: int = 5,
+) -> Runnable[Union[Dict[str, Any], List[str]], str]:
+    if prompt is not None:
+        prompt_to_use = prompt
+    elif db.dialect in SQL_PROMPTS:
+        prompt_to_use = SQL_PROMPTS[db.dialect]
+    else:
+        prompt_to_use = PROMPT
+
+    if {"input", "top_k", "table_info"}.difference(
+        prompt_to_use.input_variables + list(prompt_to_use.partial_variables)
+    ):
+        raise ValueError(
+            f"Prompt must have input variables: 'input', 'top_k', "
+            f"'table_info'. Received prompt with input variables: "
+            f"{prompt_to_use.input_variables}. Full prompt:\n\n{prompt_to_use}"
+        )
+
+    if "dialect" in prompt_to_use.input_variables:
+        prompt_to_use = prompt_to_use.partial(dialect=db.dialect)
+
+    inputs = {
+        "input": lambda x: x["input"] + "\nSQLQuery: ",
+        "table_info": lambda x: db.get_table_info(
+            table_names=x.get("table_names_to_use")
+        ),
+    }
+
+    return (
+        RunnablePassthrough.assign(**inputs)
+        | (
+            lambda x: {
+                k: v
+                for k, v in x.items()
+                if k not in ("question", "table_names_to_use")
+            }
+        )
+        | prompt_to_use.partial(top_k=str(k))
+        | llm.bind(stop=["\nSQLResult:"])
+        | StrOutputParser()
+        | _strip
+    )
+
+from langchain.chains.sql_database import query
+
+query.create_sql_query_chain = patched_create_sql_query_chain
+
+####################################################################
+
 from openai import OpenAI
 import streamlit as st
 from langchain.chains import create_sql_query_chain
@@ -9,30 +88,6 @@ from sqlalchemy import text
 import sqlalchemy
 import json
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-
-# _original_create_sql_query_chain = create_sql_query_chain
-
-# def patched_create_sql_query_chain(llm, db, prompt=None, k=5):
-#     chain = _original_create_sql_query_chain(llm, db, prompt, k)
-
-#     def new_assign_inputs(x):
-#         return {
-#             "input": x["input"] + "\nSQL Query: ",
-#             "table_info": lambda x: db.get_table_info(
-#             table_names=x.get("tabl_names_to_use")
-#         ),
-#         }
-
-#     return (
-#         RunnablePassthrough.assign(**new_assign_inputs)
-#         | chain.steps[1:]
-#     )
-
-# import langchain.chains
-# langchain.chains.create_sql_query_chain = patched_create_sql_query_chain
-
-
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
