@@ -159,7 +159,7 @@ def generate_query(consulta_usuario):
         
         return json_output
 
-    except (sqlalchemy.exc.ProgrammingError, ValueError, SyntaxError) as e:
+    except Exception as e:
         print("\nERROR:")
         print(e)
         print("\nAJUSTA LA CONSULTA MANUALMENTE Y VUELVE A INTENTAR.")
