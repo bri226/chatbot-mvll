@@ -4,6 +4,7 @@ pypdf
 streamlit
 supabase
 colorama
+pinecone
 python-dotenv
 langchain-openai
 langchain-community
