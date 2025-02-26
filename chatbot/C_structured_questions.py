@@ -91,6 +91,7 @@ from langchain_core.prompts import PromptTemplate
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
+No incluyas a Mario Vargas Llosa en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'"
 La única tabla disponible en la base de datos se llama ARTICULOS_MVLL.
 Siempre usa exactamente este nombre: ARTICULOS_MVLL.
 
