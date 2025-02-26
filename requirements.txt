@@ -1,7 +1,6 @@
 openai
 tiktoken
 pypdf
-pinecone-client
 streamlit
 supabase
 colorama
