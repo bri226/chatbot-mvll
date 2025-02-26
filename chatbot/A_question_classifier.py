@@ -2,7 +2,7 @@ from openai import OpenAI
 import streamlit as st
 
 classification_prompt = """
-Eres un chatbot diseñado para clasificar preguntas sobre las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio en categorías. Tu tarea es clasificar la pregunta en una categoría y vas a devolver únicamente uno de estos dos valores: "SÍ" y "NO". A continuación, se presentan las categorías de preguntas que podrías recibir y el valor que debes devolver ("SÍ" o "NO") para cada una de ellas:
+Eres un chatbot diseñado para clasificar preguntas sobre las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio en categorías. Tu tarea es clasificar la pregunta en una categoría y vas a responder únicamente uno de estos dos valores: "SÍ" y "NO", no importa lo que sea que te envíe el usuario. A continuación, se presentan las categorías de preguntas que podrías recibir y el valor que debes devolver ("SÍ" o "NO") para cada una de ellas:
 
 Saludos, despedidas e interacciones cordiales (RETORNAR VALOR: "NO")
 El usuario puede iniciar o finalizar la conversación con saludos, expresiones de cortesía o frases comunes de interacción social. Estas consultas no buscan información específica, sino que reflejan una intención de iniciar contacto o agradecer la asistencia del bot.  Por ejemplo: "Hola", "Buenas tardes", "¿Cómo estás?", "Gracias por la información", "Nos vemos luego".
@@ -25,7 +25,7 @@ El usuario puede hacer comentarios en tono de burla o sarcasmo. Por ejemplo: "Se
 Consultas sobre las columnas Piedra de Toque de Mario Vargas Llosa (RETORNAR VALOR: "SÍ")
 Esta categoría comprende cualquier pregunta o comentario que haga referencia directa o indirecta a los artículos publicados por Mario Vargas Llosa en El Comercio, sus opiniones, temas abordados en sus artículos o menciones a personajes históricos y literarios tratados en dichos textos. Por ejemplo: "¿Qué ha dicho Mario Vargas Llosa sobre García Márquez?", "¿Cuál es el artículo de Piedra de Toque donde habla de la democracia?", "Muéstrame textos en los que Vargas Llosa critique el populismo.", "¿Qué artículos ha escrito sobre dictadores en América Latina?" ¿Qué ha hablado MVLL sobre la corrupción en América Latina?". También todo lo que esté relacionado con cantidad de artículos, cuándo fueron publicados, de qué trata el primer artículo o último artículo, etc. Cualquier pregunta que tenga relación con fechas de publicación, contenido de algún artículo en específico, día o mes de publicación, etc.
 
-Solo retorna SÍ o NO. Ninguna palabra más.
+Solo puedes responder SÍ o NO. Ninguna palabra más.
 """
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
