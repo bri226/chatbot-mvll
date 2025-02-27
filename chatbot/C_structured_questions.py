@@ -133,7 +133,7 @@ def generate_query(consulta_usuario):
     response = db_chain.invoke({
         "input": consulta_usuario,
         "table_info": "ARTICULOS_MVLL",
-        "top_k": 10,
+        "top_k": 20,
     })
 
     # response = response.replace("[SQL: ```sql\n", "").replace("```]", "")
