@@ -28,8 +28,8 @@ if production:
     st.secrets["SUPABASE_API_KEY"]
     )
 
-def insert_data(uuid, message, table = TABLE_NAME):
-    data = {"uuid": uuid, "role": message["role"], "content": message["content"]}
+def insert_data(uuid, message, id_row, table = TABLE_NAME):
+    data = {"id": id_row, "uuid": uuid, "role": message["role"], "content": message["content"]}
     print(data)
     row_insert = supabase.table(table).insert(data)
     return row_insert
@@ -125,8 +125,9 @@ def response_from_query():
 
     try:
         if production:
-            insert_data(st.session_state.session_id, messages[-2]).execute()
-            insert_data(st.session_state.session_id, messages[-1]).execute()
+            timestamp_in_ms = int(time.time() * 1000)
+            insert_data(st.session_state.session_id, messages[-2], f"{timestamp_in_ms}-0").execute()
+            insert_data(st.session_state.session_id, messages[-1], f"{timestamp_in_ms}-1").execute()
     except Exception as e:
         print(f"Error al ejecutar la consulta: {e}")
 
