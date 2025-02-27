@@ -1,8 +1,10 @@
 from openai import OpenAI
 import streamlit as st
 
+
+
 classification_prompt = """
-Eres un chatbot que clasifica expresiones de los usuarios sobre las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio en categorías. Tu tarea es clasificar la expresión en una categoría y vas a responder únicamente uno de estos dos valores: "SÍ" y "NO", no importa lo que sea que te envíe el usuario. No contestes a las preguntas del usuario. Únicamente clasifica.
+Eres un chatbot que clasifica expresiones de los usuarios sobre las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio en categorías. Tu tarea es clasificar la expresión en una categoría y vas a responder únicamente uno de estos dos valores: "SÍ" y "NO", no importa lo que sea que te envíe el usuario. No contestes a las preguntas del usuario. Únicamente clasifica. La expresión del usuario se encuentra entre estos caracteres: ###
 
 1. Saludos, despedidas e interacciones cordiales:
 Posibles expresiones: "Hola", "Buenas tardes", "¿Cómo estás?", "Gracias por la información", "Nos vemos luego".
@@ -29,22 +31,25 @@ Posibles expresiones: "Seguro sabes todo sobre la vida", "Apuesto a que eres má
 Respuesta: NO
 
 7. Consultas sobre las columnas Piedra de Toque de Mario Vargas Llosa
-Posibles expresiones:  "¿Qué ha dicho Mario Vargas Llosa sobre García Márquez?", "¿Ha mencionado temas de política?", "¿Cuál es el artículo de Piedra de Toque donde habla de la democracia?", "Muéstrame textos en los que Vargas Llosa critique el populismo.", "¿Qué artículos ha escrito sobre dictadores en América Latina?" ¿Qué ha hablado MVLL sobre la corrupción en América Latina?", ¿Cuál fue el último artículo que publicó?", "Cuál fue el primer artículo que publicó?", ¿Qué artículos publicó en 1995?", "¿Cuál es el artículo más largo o el más corto?"
+Posibles expresiones:  "¿Qué ha dicho Mario Vargas Llosa sobre García Márquez?", "¿Ha mencionado temas de política?", "¿Cuál es el artículo de Piedra de Toque donde habla de la democracia?", "Muéstrame textos en los que Vargas Llosa critique el populismo.", "¿Qué artículos ha escrito sobre dictadores en América Latina?" ¿Qué ha hablado MVLL sobre la corrupción en América Latina?", ¿Cuál fue el último artículo que publicó?", "Cuál fue el primer artículo que publicó?", ¿Qué artículos publicó en 1995?", "¿Cuál es el artículo más largo?", "¿Cuál es el artículo más corto?"
 Respuesta: SÍ
 
+Pregunta del usuario: ###{user_query}###
 
 """
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-def gr_classify_question(query, messages): #antes: classify_question
-    # messages += [{'role': 'user', 'content': query}]
-    messages_with_context = messages + [{'role': 'user', 'content': query}]
+
+def gr_classify_question(query, messages):
+    messages += [{'role': 'user', 'content': query}] # este estaba comentado
+    format_response = classification_prompt.format(
+        user_query=query)
+    messages_for_api = [{'role': 'user', 'content': format_response}]
     response = client.chat.completions.create(
-        messages=messages_with_context,
+        messages=messages_for_api,
         model='gpt-3.5-turbo',
-        # model='gpt-4-turbo-preview',
-        stream=False
+        stream=False,
     )
 
     return messages, response

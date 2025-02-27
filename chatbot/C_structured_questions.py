@@ -1,6 +1,6 @@
-#########################################################################
-########################## MONKEY PATCHING (LANGCHAIN) ##################
-#########################################################################
+#############################################################################
+########################## MONKEY PATCHING (LANGCHAIN) ######################
+#############################################################################
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
@@ -169,7 +169,7 @@ def generate_query(consulta_usuario):
 
 def gr_structured_questions(query, messages):
     json_response = generate_query(query)
-    messages += [{'role': 'user', 'content': query}] # este estaba comentado
+    # messages += [{'role': 'user', 'content': query}] # este estaba comentado
     format_response = structured_question_prompt.format(
         user_query=query,data=json_response)
     messages_for_api = [{'role': 'user', 'content': format_response}]
