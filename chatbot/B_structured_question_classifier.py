@@ -5,9 +5,9 @@ import streamlit as st
 classify_structured_question_prompt = """
 Vas a recibir preguntas del usuario que hacen referencia a las columnas de Piedra de Toque de Mario Vargas Llosa, publicadas en el diario El Comercio. Tu tarea es identificar las preguntas del usuario que son estructuradas y las que son no estructuradas. 
 
-Las preguntas estructuradas son aquellas preguntas que hagan referencia a la fecha de publicación del artículo, el título de la columna y el contenido de uno o más artículos. Por ejemplo: "¿Cuántas veces se menciona a Gabriel García Márquez en sus artículos y en qué artículos?". Para responder estas preguntas, otro chatbot (no tú) consultará una base de datos que tiene los siguientes datos por cada artículo: Fecha, Titulo, Contenido, DIA, MES, AÑO.
+Las preguntas estructuradas son aquellas preguntas que hagan referencia a la fecha de publicación del artículo, el título de la columna y el contenido de uno o más artículos. Por ejemplo: "¿Cuántas veces se menciona a Gabriel García Márquez en sus artículos y en qué artículos? ¿Cuál es el artículo más antiguo? ¿Cuál es el artículo más reciente? ¿Qué artículos publicó en 1994?". Para responder estas preguntas, otro chatbot (no tú) consultará una base de datos que tiene los siguientes datos por cada artículo: Fecha, Titulo, Contenido, DIA, MES, AÑO. 
 
-Las preguntas no estructuradas son todas aquellas preguntas que no hagan referencia a la fecha de publicación del artículo, el título de la columna y el contenido de uno o más artículos. Por ejemplo: "¿Qué piensa Mario Vargas Llosa sobre la democracia?".
+Las preguntas no estructuradas son todas aquellas preguntas que no hagan referencia a la fecha de publicación del artículo, el título de la columna, la antigüedad de los artículos y el contenido de uno o más artículos. Por ejemplo: "¿Qué piensa Mario Vargas Llosa sobre la democracia? ¿Qué artículos hablan sobre economía?".
 
 INSTRUCCIÓN:
 1. Solo debes responder "SÍ" si la pregunta del usuario es estructurada y "NO" si la pregunta del usuario es no estructurada. No debes responder con ninguna otra información adicional.
