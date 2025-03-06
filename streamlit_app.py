@@ -152,7 +152,7 @@ def main():
     # Bucle principal de la aplicación
     if prompt := st.chat_input(
         key="prompt", 
-        placeholder = ""
+        placeholder = "Escribe tu consulta aquí"
         # placeholder="Consulta cualquier pregunta relacionada a la columna Piedra de Toque de Mario Vargas Llosa"
     ):
         response_from_query()
