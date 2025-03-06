@@ -39,7 +39,7 @@ client = OpenAI(
 )
 
 def gr_unrelated_questions(query, messages): #antes: classify_question
-    messages += [{'role': 'user', 'content': query}] #este estaba comentado
+    # messages += [{'role': 'user', 'content': query}] #este estaba comentado
     format_response = others_response.format(
         user_query=query)
     messages_for_api = [{'role': 'user', 'content': format_response}]

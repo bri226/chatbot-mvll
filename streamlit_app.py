@@ -4,7 +4,7 @@ import streamlit as st
 import os
 from chatbot.C_structured_questions import gr_structured_questions
 from chatbot.html_template import *
-from chatbot.A_question_classifier import classification_prompt, gr_classify_question
+from chatbot.A_question_classifier import gr_classify_question
 from chatbot.B_response_secondary_categories import gr_unrelated_questions
 from chatbot.B_structured_question_classifier import gr_classify_structured_questions
 from chatbot.C_unstructured_questions import gr_unstructured_questions
@@ -16,8 +16,11 @@ from colorama import Fore
 
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai.api_key = os.getenv('OPENAI_API_KEY')
-DATABASE_NAME = "mvll-articles"
+TABLE_NAME = "mvll-pdt-chatbot"
 BOT_INTRODUCTION = "Hola, soy el asistente de las columnas de Piedra de Toque de Mario Vargas Llosa en El Comercio. ¿En qué puedo ayudarte hoy?"
+main_prompt = """
+Eres un chatbot que responde preguntas del usuario acerca de las columnas Piedra de Toque de Mario Vargas Llosa, de acuerdo con una base de datos de 261 artículos que ha publicado para el diario El Comercio desde 1991 a 2023. 
+"""
 
 if production:
     supabase: Client = create_client(
@@ -25,8 +28,9 @@ if production:
     st.secrets["SUPABASE_API_KEY"]
     )
 
-def insert_data(uuid, message, table = DATABASE_NAME):
-    data = {"uuid": uuid, "role": message["role"], "content": message["content"]}
+def insert_data(uuid, message, id_row, table = TABLE_NAME):
+    data = {"id": id_row, "uuid": uuid, "role": message["role"], "content": message["content"]}
+    print(data)
     row_insert = supabase.table(table).insert(data)
     return row_insert
 
@@ -62,6 +66,7 @@ def response_from_query():
     # Se clasifica la pregunta del usuario
     messages, response = gr_classify_question(st.session_state.prompt, messages)
 
+    print("MESSAGES AFTER A: ",messages)
     # st.session_state.history = messages
     
     value = response.choices[0].message.content
@@ -73,6 +78,7 @@ def response_from_query():
 
         # BOT CLASIFICADOR DE PREGUNTAS ESTRUCTURADAS
         messages, response_classify = gr_classify_structured_questions(st.session_state.prompt, messages)
+        print("MESSAGES AFTER CLASSIFY STRUCTURED/UNSTRUCTURED QUESTIONS: ",messages)
 
         structured_or_not = response_classify.choices[0].message.content
         print(Fore.RED, "¿Estructurada o no?: ", structured_or_not, Fore.BLACK)
@@ -80,6 +86,7 @@ def response_from_query():
         if "SÍ" in structured_or_not or "Sí" in structured_or_not:
             print("Preguntas estructuradas")
             messages, response_official = gr_structured_questions(st.session_state.prompt, messages)
+            print("MESSAGES AFTER STRUCTURED QUESTIONS: ",messages)
             # value = response_official.choices[0].message.content
             # print("Respuesta a pregunta estructurada: ",value)
 
@@ -87,6 +94,7 @@ def response_from_query():
             print("Preguntas no estructuradas (embeddings)")
             # BOT RESPUESTA A PREGUNTAS NO ESTRUCTURADAS (CONTENIDO)
             messages, response_official = gr_unstructured_questions(st.session_state.prompt, messages)
+            print("MESSAGES AFTER UNSTRUCTURED QUESTIONS: ",messages)
             # value = response_official.choices[0].message.content
             # print("Respuesta a pregunta no estructurada: ",value)
         else:
@@ -99,6 +107,7 @@ def response_from_query():
     else:
         print("Preguntas de otro tipo")
         messages, response_official = gr_unrelated_questions(st.session_state.prompt, messages)
+        print("MESSAGES AFTER UNRELATED QUESTIONS: ",messages)
         st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
             assistant_message = st.write_stream(response_official)
@@ -114,9 +123,16 @@ def response_from_query():
     # {'uuid': '218f1bb4-f837-4771-85d5-534e1d2a795b', 'role': 'user', 'content': '¡Hola! ¿En qué puedo ayudarte hoy con las columnas de Piedra de Toque?'}
     # print(data) #ELIMINAR
 
-    if production:
-        insert_data(st.session_state.session_id, messages[-2]).execute()
-        insert_data(st.session_state.session_id, messages[-1]).execute()
+    try:
+        if production:
+            timestamp_in_ms = int(time.time() * 1000)
+            insert_data(st.session_state.session_id, messages[-2], f"{timestamp_in_ms}-0").execute()
+            insert_data(st.session_state.session_id, messages[-1], f"{timestamp_in_ms}-1").execute()
+    except Exception as e:
+        print(f"Error al ejecutar la consulta: {e}")
+
+    
+        
 
 def main():
 
@@ -125,7 +141,7 @@ def main():
         st.session_state.session_id = session_id()
         
     if "history" not in st.session_state:
-        st.session_state.history = [{"role": "system", "content": classification_prompt}]
+        st.session_state.history = [{"role": "system", "content": main_prompt}]
 
     if "stream" not in st.session_state:
         st.session_state.stream = None

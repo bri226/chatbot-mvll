@@ -1,6 +1,6 @@
-#########################################################################
-########################## MONKEY PATCHING (LANGCHAIN) ##################
-#########################################################################
+#############################################################################
+########################## MONKEY PATCHING (LANGCHAIN) ######################
+#############################################################################
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
@@ -91,6 +91,7 @@ from langchain_core.prompts import PromptTemplate
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
+No incluyas a Mario Vargas Llosa en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'"
 La única tabla disponible en la base de datos se llama ARTICULOS_MVLL.
 Siempre usa exactamente este nombre: ARTICULOS_MVLL.
 
@@ -132,7 +133,7 @@ def generate_query(consulta_usuario):
     response = db_chain.invoke({
         "input": consulta_usuario,
         "table_info": "ARTICULOS_MVLL",
-        "top_k": 10,
+        "top_k": 20,
     })
 
     # response = response.replace("[SQL: ```sql\n", "").replace("```]", "")
@@ -159,7 +160,7 @@ def generate_query(consulta_usuario):
         
         return json_output
 
-    except (sqlalchemy.exc.ProgrammingError, ValueError, SyntaxError) as e:
+    except Exception as e:
         print("\nERROR:")
         print(e)
         print("\nAJUSTA LA CONSULTA MANUALMENTE Y VUELVE A INTENTAR.")
@@ -168,7 +169,7 @@ def generate_query(consulta_usuario):
 
 def gr_structured_questions(query, messages):
     json_response = generate_query(query)
-    messages += [{'role': 'user', 'content': query}] # este estaba comentado
+    # messages += [{'role': 'user', 'content': query}] # este estaba comentado
     format_response = structured_question_prompt.format(
         user_query=query,data=json_response)
     messages_for_api = [{'role': 'user', 'content': format_response}]
