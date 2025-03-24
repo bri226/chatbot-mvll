@@ -30,7 +30,6 @@ if production:
 
 def insert_data(uuid, message, id_row, table = TABLE_NAME):
     data = {"id": id_row, "uuid": uuid, "role": message["role"], "content": message["content"]}
-    print(data)
     row_insert = supabase.table(table).insert(data)
     return row_insert
 
@@ -62,23 +61,37 @@ def response_from_query():
     # Se guarda el mensaje en el historial de mensajes
     messages = st.session_state.history
 
-    # print("\nMessages: ",messages)
-    # Se clasifica la pregunta del usuario
-    messages, response = gr_classify_question(st.session_state.prompt, messages)
+    # print("0: ",messages[0])
+    # print("1: ",messages[-1])
+    # print("2: ",messages[-2])
+    # print("3: ",messages[-3])
 
-    print("MESSAGES AFTER A: ",messages)
-    # st.session_state.history = messages
+    print("\nMensaje más reciente del bot: ",messages[-1]["content"])
+    print("Mensaje del usuario: ",st.session_state.prompt)
+
+    print("\nlen(messages): ",len(messages))
+
+    st.session_state.history.append(
+        {"role": "user", "content": st.session_state.prompt}
+    )
+
+    if len(messages) > 1:
+        recent_conversation = f'"bot": {st.session_state.history[-2]["content"]}\n"user": {st.session_state.prompt}'
+    else:
+        recent_conversation = f'"bot": {BOT_INTRODUCTION}\n"user": {st.session_state.prompt}'
+
+    # Se clasifica la pregunta del usuario
+    messages, response = gr_classify_question(st.session_state.prompt, recent_conversation, messages)
     
     value = response.choices[0].message.content
     
-    #response.choices[0]: Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='3', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None)
     print(Fore.RED,"\nPregunta: ", st.session_state.prompt,"\nValue: ", value,Fore.BLACK,"\n")
+
     if value == "SÍ":
         print("Preguntas sobre las columnas Piedra de Toque")
 
         # BOT CLASIFICADOR DE PREGUNTAS ESTRUCTURADAS
         messages, response_classify = gr_classify_structured_questions(st.session_state.prompt, messages)
-        print("MESSAGES AFTER CLASSIFY STRUCTURED/UNSTRUCTURED QUESTIONS: ",messages)
 
         structured_or_not = response_classify.choices[0].message.content
         print(Fore.RED, "¿Estructurada o no?: ", structured_or_not, Fore.BLACK)
@@ -86,38 +99,35 @@ def response_from_query():
         if "SÍ" in structured_or_not or "Sí" in structured_or_not:
             print("Preguntas estructuradas")
             messages, response_official = gr_structured_questions(st.session_state.prompt, messages)
-            print("MESSAGES AFTER STRUCTURED QUESTIONS: ",messages)
-            # value = response_official.choices[0].message.content
-            # print("Respuesta a pregunta estructurada: ",value)
+            # print(f"\nMESSAGES AFTER STRUCTURED QUESTIONS: {messages}")
 
         elif "NO" in structured_or_not:
             print("Preguntas no estructuradas (embeddings)")
             # BOT RESPUESTA A PREGUNTAS NO ESTRUCTURADAS (CONTENIDO)
-            messages, response_official = gr_unstructured_questions(st.session_state.prompt, messages)
-            print("MESSAGES AFTER UNSTRUCTURED QUESTIONS: ",messages)
-            # value = response_official.choices[0].message.content
-            # print("Respuesta a pregunta no estructurada: ",value)
+            messages, response_official = gr_unstructured_questions(st.session_state.prompt, recent_conversation, messages)
+            # print(f"\nMESSAGES AFTER UNSTRUCTURED QUESTIONS: {messages}")
         else:
             print("No sabe reconocer si la pregunta es estructurada o no")
 
-        st.session_state.history = messages
+        # st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
             assistant_message = st.write_stream(response_official)
 
     else:
         print("Preguntas de otro tipo")
         messages, response_official = gr_unrelated_questions(st.session_state.prompt, messages)
-        print("MESSAGES AFTER UNRELATED QUESTIONS: ",messages)
-        st.session_state.history = messages
+        # print("MESSAGES AFTER UNRELATED QUESTIONS: ",messages)
+        # st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
             assistant_message = st.write_stream(response_official)
 
     st.session_state.history.append(
         {"role": "assistant", "content": assistant_message}
     )
-    messages = st.session_state.history
+    print("DESPUÉS : ", st.session_state.history)
+    # messages = st.session_state.history
 
-    print("MESSAGES: ",messages)
+    # print("MESSAGES: ",messages)
 
     # data = {"uuid": st.session_state.session_id, "role": messages[-2]["role"], "content": messages[-1]["content"]} #ELIMINAR
     # {'uuid': '218f1bb4-f837-4771-85d5-534e1d2a795b', 'role': 'user', 'content': '¡Hola! ¿En qué puedo ayudarte hoy con las columnas de Piedra de Toque?'}

@@ -9,6 +9,7 @@ from pypdf import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import json
 import time
+import streamlit as st
 
 DATA_PATH = "./datos/docs"
 METADATA_PATH = "./datos"
@@ -19,10 +20,11 @@ METADATA_FIELDS = {
         "NOMBRE_ARCHIVO": "NOMBRE_ARCHIVO"
 }
 
-load_dotenv()
+openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# load_dotenv()
 tokenizer = tiktoken.get_encoding("cl100k_base")
 EMBEDDING_MODEL = "text-embedding-3-small"
-openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 ENCODING_FORMAT = "Windows-1252"
 metadata = pd.read_csv(f"{METADATA_PATH}/metadata.csv",sep=";",encoding=ENCODING_FORMAT)
 
@@ -31,8 +33,10 @@ def token_counter(text):
 
 text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", ".", "\n", " "],
-        chunk_size=600,
-        chunk_overlap=200,
+        chunk_size=8192,
+        chunk_overlap=100,
+        # chunk_size=600,
+        # chunk_overlap=200,
         length_function=token_counter
 )
 
@@ -143,7 +147,7 @@ def main():
     )
     
     embed_entries = embeddings_from_chunks(chunks)
-    with open("embeddings.json", "w", encoding=ENCODING_FORMAT) as f:
+    with open("embeddings_v0.json", "w", encoding=ENCODING_FORMAT) as f:
         json.dump(embed_entries, f)
 
 

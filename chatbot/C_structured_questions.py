@@ -88,10 +88,16 @@ from sqlalchemy import text
 import sqlalchemy
 import json
 from langchain_core.prompts import PromptTemplate
+import re
+from colorama import Fore
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
-No incluyas a Mario Vargas Llosa en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'"
+No incluyas a Mario Vargas Llosa en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'". 
+Tampoco incluyas las palabras Piedra de Toque en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Piedra de Toque%'". 
+Esto debido a que cada vez que mencionan la expresión, lo más probable es que se estén refiriendo al nombre de la columna que publicaba Mario Vargas Llosa, y no a las palabras en sí.
+Si el usuario pregunta por una cantidad, usa COUNT(*) sin agregar filtros adicionales a menos que sean explícitos.
+
 La única tabla disponible en la base de datos se llama ARTICULOS_MVLL.
 Siempre usa exactamente este nombre: ARTICULOS_MVLL.
 
@@ -102,7 +108,9 @@ SELECT * FROM (SELECT Fecha, Titulo, Contenido FROM ARTICULOS_MVLL ORDER BY Fech
 
 Pregunta del usuario: {input}
 Solo haz consultas a esta tabla: {table_info}.
-Máximo número de resultados: {top_k}'''
+Máximo número de resultados: {top_k}
+'''
+
 prompt = PromptTemplate.from_template(template)
 
 structured_question_prompt = """
@@ -125,19 +133,33 @@ def conexion_sqlite(db_path="chatbot/bd/articulos_mvll.db"):
     db = SQLDatabase(engine)
     return db, engine
 
+
+def clean_query(response):
+    response = response.replace("\n"," ")
+    match = re.search(r'```sql (.*?);', response)
+    if match:
+        print(match.group(1).strip())
+        return match.group(1).strip()
+    else:
+        return response.strip()
+
 def generate_query(consulta_usuario):
     db, engine = conexion_sqlite()
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=api_key)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0, openai_api_key=api_key)
     db_chain = create_sql_query_chain(llm, db, prompt)
 
     response = db_chain.invoke({
         "input": consulta_usuario,
         "table_info": "ARTICULOS_MVLL",
-        "top_k": 20,
+        "top_k": 10,
     })
 
     # response = response.replace("[SQL: ```sql\n", "").replace("```]", "")
-    print(f"\nGENERATED QUERY:\n{response}")
+    print(Fore.CYAN + f"\nGENERATED QUERY:\n{response}" + Fore.BLACK)
+
+    response = clean_query(response)
+
+    print(Fore.GREEN + f"\nCLEANED QUERY:\n{response}" + Fore.BLACK)
     
     try:
         result_str = db.run(response)
@@ -175,7 +197,7 @@ def gr_structured_questions(query, messages):
     messages_for_api = [{'role': 'user', 'content': format_response}]
     response = client.chat.completions.create(
         messages=messages_for_api,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         stream=True,
     )
 

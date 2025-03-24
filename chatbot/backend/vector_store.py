@@ -9,7 +9,8 @@ import json
 load_dotenv()
 BATCH_SIZE = 10
 openai_client = OpenAI(api_key = os.getenv('OPENAI_API_KEY'))
-INDEX_NAME = "vo-articles-v2"
+INDEX_NAME = "vo-articles"
+# INDEX_NAME = "vo-articles-v2"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
 
