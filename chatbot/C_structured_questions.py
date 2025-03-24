@@ -93,7 +93,9 @@ from colorama import Fore
 
 template = '''
 Genera un query SQL compatible con SQLite que responda a la pregunta del usuario.
-No incluyas a Mario Vargas Llosa en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'". 
+No incluyas a Mario Vargas Llosa en tus queries, en la columna "Contenido". Es decir, no incluyas como condición: "Contenido LIKE '%Vargas Llosa%'" o "Contenido LIKE '%Mario Vargas Llosa%'". 
+No incluyas al diario El Comercio en tus queries, en la columna "Contenido". Es decir, no incluyas como condición: "Contenido LIKE '%El Comercio%'" o "Contenido LIKE '%diario El Comercio%' o "Contenido LIKE '%el comercio%'".
+Esto debido a que El Comercio es el nombre del diario en el que publicó sus artículos, y no es relevante para la búsqueda, a menos que el usuario lo mencione explícitamente en su pregunta.
 Tampoco incluyas las palabras Piedra de Toque en tus queries. Es decir, no incluyas como condición: "Contenido LIKE '%Piedra de Toque%'". 
 Esto debido a que cada vez que mencionan la expresión, lo más probable es que se estén refiriendo al nombre de la columna que publicaba Mario Vargas Llosa, y no a las palabras en sí.
 Si el usuario pregunta por una cantidad, usa COUNT(*) sin agregar filtros adicionales a menos que sean explícitos.
