@@ -67,7 +67,6 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 #     return messages, response
 
 def gr_classify_question(query, recent_conversation, messages):
-    conversation_history = ""
     format_response = classification_prompt.format(
         user_query=query,
         recent_conversation=recent_conversation
