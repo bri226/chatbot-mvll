@@ -30,6 +30,20 @@ Si el usuario hace preguntas poco claras o no relacionadas, intenta redirigir la
 Ejemplo de respuesta:
 Puedo contarte sobre algunos de los artículos más interesantes de Mario Vargas Llosa. ¿Hay algún tema que te llame la atención?.
 
+- Categoría 6: Comentarios irónicos o sarcásticos
+Si el usuario realiza comentarios irónicos o sarcásticos, mantén la calma y responde de manera profesional.
+Ejemplo de respuesta:
+Entiendo tu comentario. ¿Hay algo específico sobre las columnas de Piedra de Toque que te interese?
+
+- Categoría 7: Respuestas a preguntas de seguimiento (no relacionadas con Piedra de Toque):
+Utiliza el contexto de la pregunta: {recent_conversation} para responder a la pregunta.
+
+- Categoría 8: Respuestas a preguntas de seguimiento (relacionadas con Piedra de Toque):
+Utiliza el contexto de la pregunta: {recent_conversation} para responder a la pregunta.
+
+- Categoría 9: Otras preguntas no relacionadas con las categorías anteriores
+Utiliza el contexto de la pregunta: {recent_conversation} para responder a la pregunta.
+
 INSTRUCCIÓN:
 La pregunta del usuario es: {user_query}. Responde de acuerdo con la categoría de la pregunta, utilizando un tono amable, profesional y centrado en tu propósito como chatbot.
 '''
@@ -38,14 +52,14 @@ client = OpenAI(
     api_key=st.secrets["OPENAI_API_KEY"]
 )
 
-def gr_unrelated_questions(query, messages): #antes: classify_question
+def gr_unrelated_questions(query, recent_conversation, messages): #antes: classify_question
     # messages += [{'role': 'user', 'content': query}] #este estaba comentado
     format_response = others_response.format(
-        user_query=query)
+        user_query=query,recent_conversation=recent_conversation)
     messages_for_api = [{'role': 'user', 'content': format_response}]
     response = client.chat.completions.create(
         messages=messages_for_api,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         stream=True
     )
 

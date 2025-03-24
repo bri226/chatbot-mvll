@@ -115,7 +115,7 @@ def response_from_query():
 
     else:
         print("Preguntas de otro tipo")
-        messages, response_official = gr_unrelated_questions(st.session_state.prompt, messages)
+        messages, response_official = gr_unrelated_questions(st.session_state.prompt, recent_conversation, messages)
         # print("MESSAGES AFTER UNRELATED QUESTIONS: ",messages)
         # st.session_state.history = messages
         with st.chat_message("assistant", avatar=BOT_AVATAR):
