@@ -1,1 +1,6 @@
-"/datos/docs/" 
+/datos/docs/
+chatbot/__pycache__
+.streamlit/secrets.toml
+__pycache__
+embeddings_anterior.json
+embeddings.json
