@@ -1,7 +1,1 @@
-.env
-chatbot/__pycache__
-.streamlit/secrets.toml
-__pycache__
-embeddings_anterior.json
-embeddings.json
-pruebas/
+"/datos/docs/" 
